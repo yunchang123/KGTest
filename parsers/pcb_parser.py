@@ -1,12 +1,43 @@
 """
 PCB JSON数据解析器
 """
+import json
 import pandas as pd
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 
-from ..utils.helpers import load_json, get_function_class_name, get_physical_class_name
-from ..config import FUNCTION_CLASS_MAP, PHYSICAL_CLASS_MAP
+
+def load_json(filepath: Path) -> Dict[str, Any]:
+    """加载JSON文件"""
+    with open(filepath, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+
+def get_function_class_name(func_class: int, mapping: Dict[int, str]) -> str:
+    """获取功能类别名称"""
+    return mapping.get(func_class, f'Class_{func_class}')
+
+
+def get_physical_class_name(phy_class: int, mapping: Dict[int, str]) -> str:
+    """获取物理类别名称"""
+    return mapping.get(phy_class, f'Physical_{phy_class}')
+
+
+# 本地配置（避免循环导入）
+FUNCTION_CLASS_MAP = {
+    1: 'Resistor',
+    2: 'Capacitor',
+    7: 'Inductor',
+    11: 'LED',
+    12: 'Diode',
+    14: 'IC/Transistor'
+}
+
+PHYSICAL_CLASS_MAP = {
+    1: 'Passive',
+    2: 'Active',
+    3: 'Connector'
+}
 
 
 class PCBParser:

@@ -6,8 +6,6 @@ import networkx as nx
 from pathlib import Path
 from typing import Dict, List
 
-from ..config import EXPORT_CONFIG
-
 
 class CSVExporter:
     """CSV导出器"""
@@ -39,7 +37,7 @@ class CSVExporter:
                 'name': data.get('name', ''),
                 'type': data.get('type', ''),
                 'label': data.get('label', ''),
-                'properties': str({k: v for k, v in data.items() 
+                'properties': str({k: v for k, v in data.items()
                                  if k not in ['name', 'type', 'label']})
             })
 

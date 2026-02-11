@@ -8,7 +8,18 @@ import pandas as pd
 from typing import Dict, List, Optional, Tuple
 from pathlib import Path
 
-from ..config import FUNCTION_CLASS_MAP, VIS_CONFIG, OUTPUT_DIR
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'Arial Unicode MS']
+
+
+# 本地配置（从config.py复制）
+FUNCTION_CLASS_MAP = {
+    1: 'Resistor',
+    2: 'Capacitor',
+    7: 'Inductor',
+    11: 'LED',
+    12: 'Diode',
+    14: 'IC/Transistor'
+}
 
 
 class ChartGenerator:
@@ -58,13 +69,13 @@ class ChartGenerator:
         fig.patch.set_facecolor(self.bgcolor)
 
         top_packages = self.df['C'].value_counts().head(top_n)
-        bars = ax.barh(range(len(top_packages)), top_packages.values, 
+        bars = ax.barh(range(len(top_packages)), top_packages.values,
                       color='#5d9cec', alpha=0.8, edgecolor='white', linewidth=0.5)
 
         ax.set_yticks(range(len(top_packages)))
         ax.set_yticklabels(top_packages.index, color='white', fontsize=10)
         ax.set_xlabel('元件数量', color='white', fontsize=11)
-        ax.set_title(f'Top {top_n} 封装类型分布', color='white', 
+        ax.set_title(f'Top {top_n} 封装类型分布', color='white',
                     fontsize=14, fontweight='bold', pad=15)
         ax.tick_params(colors='white')
         ax.invert_yaxis()
@@ -75,7 +86,7 @@ class ChartGenerator:
 
         self._style_axis(ax)
         plt.tight_layout()
-        plt.savefig(output_path, dpi=150, facecolor=self.bgcolor, 
+        plt.savefig(output_path, dpi=150, facecolor=self.bgcolor,
                    bbox_inches='tight')
         plt.close()
 
@@ -90,19 +101,19 @@ class ChartGenerator:
         colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c']
 
         wedges, texts, autotexts = ax.pie(
-            func_counts.values, 
-            labels=func_names, 
+            func_counts.values,
+            labels=func_names,
             autopct='%1.1f%%',
-            colors=colors, 
+            colors=colors,
             textprops={'color': 'white', 'fontsize': 11},
             wedgeprops={'edgecolor': 'white', 'linewidth': 2}
         )
 
-        ax.set_title('功能类别分布', color='white', fontsize=14, 
+        ax.set_title('功能类别分布', color='white', fontsize=14,
                     fontweight='bold', pad=15)
 
         plt.tight_layout()
-        plt.savefig(output_path, dpi=150, facecolor=self.bgcolor, 
+        plt.savefig(output_path, dpi=150, facecolor=self.bgcolor,
                    bbox_inches='tight')
         plt.close()
 
@@ -120,16 +131,16 @@ class ChartGenerator:
         for func_class in self.df['FunctionClass'].unique():
             subset = self.df[self.df['FunctionClass'] == func_class]
             label = FUNCTION_CLASS_MAP.get(func_class, f'Class_{func_class}')
-            ax.scatter(subset['ChipL'], subset['ChipW'], 
-                      c=func_colors.get(func_class, '#95a5a6'), 
-                      label=label, alpha=0.7, s=80, 
+            ax.scatter(subset['ChipL'], subset['ChipW'],
+                      c=func_colors.get(func_class, '#95a5a6'),
+                      label=label, alpha=0.7, s=80,
                       edgecolors='white', linewidth=1)
 
         ax.set_xlabel('长度 (mm)', color='white', fontsize=12)
         ax.set_ylabel('宽度 (mm)', color='white', fontsize=12)
-        ax.set_title('元件尺寸分布 (长×宽)', color='white', 
+        ax.set_title('元件尺寸分布 (长×宽)', color='white',
                     fontsize=14, fontweight='bold', pad=15)
-        ax.legend(loc='upper right', facecolor=self.panel_color, 
+        ax.legend(loc='upper right', facecolor=self.panel_color,
                  edgecolor='white', labelcolor='white', fontsize=10)
 
         self._style_axis(ax)
@@ -137,7 +148,7 @@ class ChartGenerator:
         ax.set_ylim(0, 15)
 
         plt.tight_layout()
-        plt.savefig(output_path, dpi=150, facecolor=self.bgcolor, 
+        plt.savefig(output_path, dpi=150, facecolor=self.bgcolor,
                    bbox_inches='tight')
         plt.close()
 
@@ -148,25 +159,25 @@ class ChartGenerator:
         fig.patch.set_facecolor(self.bgcolor)
 
         heights = self.df['ChipH']
-        n, bins, patches = ax.hist(heights, bins=30, color='#08d9d6', 
+        n, bins, patches = ax.hist(heights, bins=30, color='#08d9d6',
                                   alpha=0.7, edgecolor='white', linewidth=1)
 
-        ax.axvline(heights.mean(), color='#ff2e63', linestyle='--', 
+        ax.axvline(heights.mean(), color='#ff2e63', linestyle='--',
                   linewidth=2.5, label=f'平均值: {heights.mean():.2f}mm')
-        ax.axvline(heights.median(), color='#f39c12', linestyle=':', 
+        ax.axvline(heights.median(), color='#f39c12', linestyle=':',
                   linewidth=2.5, label=f'中位数: {heights.median():.2f}mm')
 
         ax.set_xlabel('高度 (mm)', color='white', fontsize=12)
         ax.set_ylabel('元件数量', color='white', fontsize=12)
-        ax.set_title('元件高度分布', color='white', fontsize=14, 
+        ax.set_title('元件高度分布', color='white', fontsize=14,
                     fontweight='bold', pad=15)
-        ax.legend(facecolor=self.panel_color, edgecolor='white', 
+        ax.legend(facecolor=self.panel_color, edgecolor='white',
                  labelcolor='white', fontsize=11)
 
         self._style_axis(ax)
 
         plt.tight_layout()
-        plt.savefig(output_path, dpi=150, facecolor=self.bgcolor, 
+        plt.savefig(output_path, dpi=150, facecolor=self.bgcolor,
                    bbox_inches='tight')
         plt.close()
 
@@ -199,12 +210,12 @@ class ChartGenerator:
         # 3. 尺寸分布
         ax3 = axes[1, 0]
         ax3.set_facecolor(self.panel_color)
-        func_colors = {1: '#e74c3c', 2: '#3498db', 7: '#2ecc71', 
+        func_colors = {1: '#e74c3c', 2: '#3498db', 7: '#2ecc71',
                       11: '#f39c12', 12: '#9b59b6', 14: '#1abc9c'}
         for func_class in self.df['FunctionClass'].unique()[:6]:
             subset = self.df[self.df['FunctionClass'] == func_class]
-            ax3.scatter(subset['ChipL'], subset['ChipW'], 
-                       c=func_colors.get(func_class, '#95a5a6'), 
+            ax3.scatter(subset['ChipL'], subset['ChipW'],
+                       c=func_colors.get(func_class, '#95a5a6'),
                        alpha=0.6, s=50, edgecolors='white', linewidth=0.5)
         ax3.set_xlabel('长度 (mm)', color='white')
         ax3.set_ylabel('宽度 (mm)', color='white')
@@ -214,9 +225,9 @@ class ChartGenerator:
         # 4. 高度分布
         ax4 = axes[1, 1]
         ax4.set_facecolor(self.panel_color)
-        ax4.hist(self.df['ChipH'], bins=25, color='#08d9d6', alpha=0.7, 
+        ax4.hist(self.df['ChipH'], bins=25, color='#08d9d6', alpha=0.7,
                 edgecolor='white')
-        ax4.axvline(self.df['ChipH'].mean(), color='#ff2e63', linestyle='--', 
+        ax4.axvline(self.df['ChipH'].mean(), color='#ff2e63', linestyle='--',
                    linewidth=2, label=f'均值: {self.df["ChipH"].mean():.2f}mm')
         ax4.set_xlabel('高度 (mm)', color='white')
         ax4.set_ylabel('数量', color='white')
@@ -224,11 +235,11 @@ class ChartGenerator:
         ax4.legend(facecolor=self.panel_color, labelcolor='white')
         self._style_axis(ax4)
 
-        fig.suptitle('PCB元件数据分析面板', fontsize=18, color='white', 
+        fig.suptitle('PCB元件数据分析面板', fontsize=18, color='white',
                     fontweight='bold', y=0.98)
 
         plt.tight_layout(rect=[0, 0, 1, 0.95])
-        plt.savefig(output_path, dpi=150, facecolor=self.bgcolor, 
+        plt.savefig(output_path, dpi=150, facecolor=self.bgcolor,
                    bbox_inches='tight')
         plt.close()
 

@@ -1,1 +1,1 @@
-"""\nVISUALIZATION Module\n"""\n
+"""VISUALIZATION Module"""

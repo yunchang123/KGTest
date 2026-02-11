@@ -1,1 +1,1 @@
-"""\nEXPORTERS Module\n"""\n
+"""\nEXPORTERS Module\n"""

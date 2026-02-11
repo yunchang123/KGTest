@@ -5,8 +5,16 @@ import numpy as np
 import networkx as nx
 from typing import Dict, List, Tuple, Optional
 from collections import defaultdict
+from enum import Enum
 
-from ..graph_builder.entity_relations import NodeType
+
+# 本地定义NodeType（从entity_relations复制）
+class NodeType(Enum):
+    """节点类型枚举"""
+    COMPONENT = "Component"
+    PACKAGE = "Package"
+    FUNCTION_CLASS = "FunctionClass"
+    PHYSICAL_CLASS = "PhysicalClass"
 
 
 class LayoutEngine:
@@ -24,7 +32,7 @@ class LayoutEngine:
 class HierarchicalLayout(LayoutEngine):
     """分层树状布局"""
 
-    def __init__(self, graph: nx.DiGraph, 
+    def __init__(self, graph: nx.DiGraph,
                  layer_spacing: float = 4.0,
                  node_spacing: float = 1.8):
         super().__init__(graph)
@@ -37,27 +45,27 @@ class HierarchicalLayout(LayoutEngine):
         nodes_by_type = self._group_nodes_by_type()
 
         # 第0层: 物理类别 (最左)
-        self._place_layer(nodes_by_type[NodeType.PHYSICAL_CLASS], -8, 4.0)
+        self._place_layer(nodes_by_type.get('PhysicalClass', []), -8, 4.0)
 
         # 第1层: 功能类别
-        self._place_layer(nodes_by_type[NodeType.FUNCTION_CLASS], -4, 2.5)
+        self._place_layer(nodes_by_type.get('FunctionClass', []), -4, 2.5)
 
         # 第2层: 封装 (按连接数排序)
-        pkg_nodes = nodes_by_type[NodeType.PACKAGE]
+        pkg_nodes = nodes_by_type.get('Package', [])
         pkg_nodes_sorted = self._sort_by_connection_count(pkg_nodes)
         self._place_layer(pkg_nodes_sorted, 0, 1.8)
 
         # 第3层: 元件 (只显示部分)
-        comp_nodes = self._select_representative_components(nodes_by_type[NodeType.COMPONENT])
+        comp_nodes = self._select_representative_components(nodes_by_type.get('Component', []))
         self._place_components_by_package(comp_nodes, 5)
 
         return self.positions
 
-    def _group_nodes_by_type(self) -> Dict[NodeType, List[str]]:
+    def _group_nodes_by_type(self) -> Dict[str, List[str]]:
         """按类型分组节点"""
         groups = defaultdict(list)
         for node_id, data in self.graph.nodes(data=True):
-            node_type = NodeType(data.get('type'))
+            node_type = data.get('type', 'Unknown')
             groups[node_type].append(node_id)
         return groups
 
@@ -76,7 +84,7 @@ class HierarchicalLayout(LayoutEngine):
             counts[node] = self.graph.in_degree(node) + self.graph.out_degree(node)
         return sorted(nodes, key=lambda x: counts[x], reverse=True)
 
-    def _select_representative_components(self, all_components: List[str], 
+    def _select_representative_components(self, all_components: List[str],
                                          max_components: int = 80) -> List[str]:
         """选择代表性元件（每个封装最多2个）"""
         selected = set()
@@ -86,7 +94,7 @@ class HierarchicalLayout(LayoutEngine):
         for comp in all_components:
             for neighbor in self.graph.neighbors(comp):
                 neighbor_data = self.graph.nodes[neighbor]
-                if neighbor_data.get('type') == NodeType.PACKAGE.value:
+                if neighbor_data.get('type') == 'Package':
                     pkg_components[neighbor].append(comp)
                     break
 
@@ -107,7 +115,7 @@ class HierarchicalLayout(LayoutEngine):
             pkg = None
             for neighbor in self.graph.neighbors(comp):
                 neighbor_data = self.graph.nodes[neighbor]
-                if neighbor_data.get('type') == NodeType.PACKAGE.value:
+                if neighbor_data.get('type') == 'Package':
                     pkg = neighbor
                     break
 
@@ -136,8 +144,8 @@ class SpringLayout(LayoutEngine):
     def calculate_layout(self) -> Dict[str, Tuple[float, float]]:
         """计算弹簧布局"""
         pos = nx.spring_layout(
-            self.graph, 
-            k=self.k, 
+            self.graph,
+            k=self.k,
             iterations=self.iterations,
             seed=42
         )
@@ -146,13 +154,13 @@ class SpringLayout(LayoutEngine):
         for node_id, (x, y) in pos.items():
             node_type = self.graph.nodes[node_id].get('type')
 
-            if node_type == NodeType.PHYSICAL_CLASS.value:
+            if node_type == 'PhysicalClass':
                 # 物理类别放左侧
                 self.positions[node_id] = (x * 0.5 - 4, y * 3)
-            elif node_type == NodeType.FUNCTION_CLASS.value:
+            elif node_type == 'FunctionClass':
                 # 功能类别放右侧
                 self.positions[node_id] = (x * 0.5 + 4, y * 2)
-            elif node_type == NodeType.PACKAGE.value:
+            elif node_type == 'Package':
                 # 封装放中间
                 self.positions[node_id] = (x * 2, y * 1.5)
             else:
@@ -174,14 +182,11 @@ class RadialLayout(LayoutEngine):
         pos = {}
 
         # 中心放置最常用的封装
-        center_node = max(
-            [n for n, d in self.graph.nodes(data=True) 
-             if d.get('type') == NodeType.PACKAGE.value],
-            key=lambda x: self.graph.degree(x),
-            default=None
-        )
+        pkg_nodes = [n for n, d in self.graph.nodes(data=True)
+                    if d.get('type') == 'Package']
 
-        if center_node:
+        if pkg_nodes:
+            center_node = max(pkg_nodes, key=lambda x: self.graph.degree(x))
             pos[center_node] = (0, 0)
 
             # 第一层: 元件
@@ -195,7 +200,7 @@ class RadialLayout(LayoutEngine):
         self.positions = pos
         return pos
 
-    def _place_in_circle(self, nodes: List[str], radius: float, 
+    def _place_in_circle(self, nodes: List[str], radius: float,
                         start_angle: float, pos: Dict):
         """在圆周上放置节点"""
         n = len(nodes)

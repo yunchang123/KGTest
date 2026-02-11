@@ -5,7 +5,11 @@ import networkx as nx
 from pathlib import Path
 from typing import Dict, List
 
-from ..config import EXPORT_CONFIG
+
+# 本地配置
+EXPORT_CONFIG = {
+    'graph_formats': ['graphml', 'gml', 'gexf']
+}
 
 
 class GraphFormatExporter:
@@ -59,12 +63,12 @@ class GraphFormatExporter:
         G = nx.DiGraph()
 
         for node_id, data in graph.nodes(data=True):
-            str_data = {k: str(v) if not isinstance(v, (int, float, bool)) else v 
+            str_data = {k: str(v) if not isinstance(v, (int, float, bool)) else v
                        for k, v in data.items()}
             G.add_node(node_id, **str_data)
 
         for src, tgt, data in graph.edges(data=True):
-            str_data = {k: str(v) if not isinstance(v, (int, float, bool)) else v 
+            str_data = {k: str(v) if not isinstance(v, (int, float, bool)) else v
                        for k, v in data.items()}
             G.add_edge(src, tgt, **str_data)
 

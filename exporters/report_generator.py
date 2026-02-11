@@ -7,7 +7,16 @@ from datetime import datetime
 from typing import Dict, Any
 import pandas as pd
 
-from ..config import FUNCTION_CLASS_MAP
+
+# 本地配置
+FUNCTION_CLASS_MAP = {
+    1: 'Resistor',
+    2: 'Capacitor',
+    7: 'Inductor',
+    11: 'LED',
+    12: 'Diode',
+    14: 'IC/Transistor'
+}
 
 
 class ReportGenerator:

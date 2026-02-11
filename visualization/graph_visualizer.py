@@ -5,12 +5,42 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import networkx as nx
 import numpy as np
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Any
 from pathlib import Path
 
-from .layout_engines import LayoutEngine, HierarchicalLayout
-from ..config import VIS_CONFIG, OUTPUT_DIR
-from ..graph_builder.entity_relations import NodeType, RelationType
+from visualization.layout_engines import LayoutEngine, HierarchicalLayout
+
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'Arial Unicode MS']
+
+# 本地配置
+VIS_CONFIG = {
+    'figure_size': (20, 16),
+    'dpi': 200,
+    'bgcolor': '#0d1117',
+    'node_colors': {
+        'PhysicalClass': '#ff2e63',
+        'FunctionClass': '#08d9d6',
+        'Package': '#5d9cec',
+        'Component': '#f39c12'
+    },
+    'edge_colors': {
+        'hasPhysicalType': '#ff2e63',
+        'hasFunction': '#08d9d6',
+        'usesPackage': '#5d9cec'
+    },
+    'font_size': {
+        'PhysicalClass': 11,
+        'FunctionClass': 10,
+        'Package': 9,
+        'Component': 7
+    },
+    'node_sizes': {
+        'PhysicalClass': 1000,
+        'FunctionClass': 700,
+        'Package': 500,
+        'Component': 250
+    }
+}
 
 
 class GraphVisualizer:
@@ -30,11 +60,11 @@ class GraphVisualizer:
         self.positions = layout_engine.calculate_layout()
         return self
 
-    def visualize(self, 
+    def visualize(self,
                   title: str = "PCB Knowledge Graph",
                   output_path: Optional[Path] = None,
                   show_stats: bool = True,
-                  figsize: Optional[Tuple[int, int]] = None) -> plt.Figure:
+                  figsize: Optional[Tuple[int, int]] = None):
         """可视化知识图谱"""
 
         # 创建图形
@@ -73,8 +103,8 @@ class GraphVisualizer:
 
         # 保存
         if output_path:
-            plt.savefig(output_path, dpi=self.config['dpi'], 
-                       facecolor=self.config['bgcolor'], 
+            plt.savefig(output_path, dpi=self.config['dpi'],
+                       facecolor=self.config['bgcolor'],
                        edgecolor='none', bbox_inches='tight')
             print(f"✓ 图谱已保存: {output_path}")
 
@@ -98,7 +128,7 @@ class GraphVisualizer:
             relation = data.get('relation', '')
             color = self.config['edge_colors'].get(relation, '#aaaaaa')
 
-            ax.plot([x1, x2], [y1, y2], color=color, alpha=0.25, 
+            ax.plot([x1, x2], [y1, y2], color=color, alpha=0.25,
                    linewidth=1.2, zorder=1)
 
     def _draw_nodes(self, ax):
@@ -116,7 +146,7 @@ class GraphVisualizer:
                 ax.add_patch(circle)
 
             # 绘制主节点
-            circle = plt.Circle((x, y), np.sqrt(size)/35, color=color, 
+            circle = plt.Circle((x, y), np.sqrt(size)/35, color=color,
                               alpha=0.95, zorder=3, edgecolor='white', linewidth=2)
             ax.add_patch(circle)
 
@@ -125,7 +155,7 @@ class GraphVisualizer:
             if len(label) > 15:
                 label = label[:12] + '...'
 
-            ax.text(x, y, label, ha='center', va='center', 
+            ax.text(x, y, label, ha='center', va='center',
                    fontsize=fontsize, color='white', fontweight='bold', zorder=4)
 
     def _draw_layer_labels(self, ax):
@@ -138,30 +168,30 @@ class GraphVisualizer:
         ]
 
         for x, y, label, color in labels:
-            ax.text(x, y, label, ha='center', va='center', 
+            ax.text(x, y, label, ha='center', va='center',
                    fontsize=12, color=color, fontweight='bold', alpha=0.8)
 
     def _draw_title(self, ax, title: str):
         """绘制标题"""
-        ax.text(-1, 13.5, title, fontsize=24, color='white', 
+        ax.text(-1, 13.5, title, fontsize=24, color='white',
                ha='center', fontweight='bold')
-        ax.text(-1, 12.8, 'Knowledge Graph of PCB Components', 
+        ax.text(-1, 12.8, 'Knowledge Graph of PCB Components',
                fontsize=14, color='#888888', ha='center', style='italic')
 
     def _draw_legend(self, ax):
         """绘制图例"""
         legend_elements = [
-            mpatches.Patch(color=self.config['node_colors']['PhysicalClass'], 
+            mpatches.Patch(color=self.config['node_colors']['PhysicalClass'],
                           label='PhysicalClass (物理类别)'),
-            mpatches.Patch(color=self.config['node_colors']['FunctionClass'], 
+            mpatches.Patch(color=self.config['node_colors']['FunctionClass'],
                           label='FunctionClass (功能类别)'),
-            mpatches.Patch(color=self.config['node_colors']['Package'], 
+            mpatches.Patch(color=self.config['node_colors']['Package'],
                           label='Package (封装)'),
-            mpatches.Patch(color=self.config['node_colors']['Component'], 
+            mpatches.Patch(color=self.config['node_colors']['Component'],
                           label='Component (元件)')
         ]
         ax.legend(handles=legend_elements, loc='lower right', fontsize=10,
-                 facecolor=self.config['bgcolor'], edgecolor='white', 
+                 facecolor=self.config['bgcolor'], edgecolor='white',
                  labelcolor='white', framealpha=0.9)
 
     def _draw_statistics(self, ax):
@@ -179,7 +209,7 @@ class GraphVisualizer:
 """
         ax.text(-9.5, 10, stats_text, fontsize=10, color='white', va='top',
                family='monospace',
-               bbox=dict(boxstyle='round,pad=0.5', facecolor='#161b22', 
+               bbox=dict(boxstyle='round,pad=0.5', facecolor='#161b22',
                         edgecolor='#30363d', linewidth=2))
 
     def _calculate_stats(self) -> Dict:
@@ -197,15 +227,15 @@ class GraphVisualizer:
             'total_nodes': total_nodes,
             'visible_nodes': visible_nodes,
             'visible_edges': visible_edges,
-            'package_count': type_counts.get(NodeType.PACKAGE.value, 0),
-            'function_count': type_counts.get(NodeType.FUNCTION_CLASS.value, 0),
-            'physical_count': type_counts.get(NodeType.PHYSICAL_CLASS.value, 0)
+            'package_count': type_counts.get('Package', 0),
+            'function_count': type_counts.get('FunctionClass', 0),
+            'physical_count': type_counts.get('PhysicalClass', 0)
         }
 
 
-def visualize_knowledge_graph(graph: nx.DiGraph, 
+def visualize_knowledge_graph(graph: nx.DiGraph,
                               output_path: Path,
-                              title: str = "PCB Knowledge Graph") -> plt.Figure:
+                              title: str = "PCB Knowledge Graph"):
     """便捷函数：可视化知识图谱"""
     visualizer = GraphVisualizer(graph)
     layout = HierarchicalLayout(graph)
